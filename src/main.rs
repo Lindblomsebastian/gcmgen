@@ -48,7 +48,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 return Ok(()); // Not an actual error, just exit gracefully
             }
             Err(e) => {
-                eprintln!("Error: {}", e); // Use {} to invoke Display instead of Debug
+                eprintln!("Error: {}", e);
                 return Err(Box::new(e));
             }
         };

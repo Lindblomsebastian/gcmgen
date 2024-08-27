@@ -17,7 +17,7 @@ impl fmt::Display for GitError {
         match self {
             GitError::IoError(err) => write!(f, "IO error: {}", err),
             GitError::GitCommandFailed(err) => write!(f, "Git command failed: {}", err),
-            GitError::EmptyDiff => write!(f, "The diff is empty"),
+            GitError::EmptyDiff => write!(f, "No changes are staged for commit"),
         }
     }
 }
