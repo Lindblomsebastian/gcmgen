@@ -1,35 +1,57 @@
-use std::io;
+use std::error::Error;
+use std::io::ErrorKind;
+use std::{fmt, io};
 
+use crate::git::GitError::GitCommandFailed;
 use std::process::Command;
 
-pub fn get_diff() -> Result<String, io::Error> {
-    Command::new("git")
-        .args(&["diff", "--staged"])
-        .output()
-        .and_then(|output| {
-            if output.status.success() {
-                Ok(String::from_utf8_lossy(&output.stdout).to_string())
-            } else {
-                Err(io::Error::new(
-                    io::ErrorKind::Other,
-                    "Failed to get git diff",
-                ))
-            }
-        })
+#[derive(Debug)]
+pub enum GitError {
+    IoError(io::Error),
+    GitCommandFailed(String),
+    EmptyDiff,
 }
 
-pub fn commit(message: &str) -> Result<(), io::Error> {
-    Command::new("git")
+impl fmt::Display for GitError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            GitError::IoError(err) => write!(f, "IO error: {}", err),
+            GitError::GitCommandFailed(err) => write!(f, "Git command failed: {}", err),
+            GitError::EmptyDiff => write!(f, "The diff is empty"),
+        }
+    }
+}
+
+impl Error for GitError {}
+
+impl From<io::Error> for GitError {
+    fn from(err: io::Error) -> GitError {
+        GitError::IoError(err)
+    }
+}
+
+pub fn get_diff() -> Result<String, GitError> {
+    let output = Command::new("git").args(&["diff", "--staged"]).output()?;
+
+    if output.status.success() {
+        if output.stdout.is_empty() {
+            Err(GitError::EmptyDiff)
+        } else {
+            Ok(String::from_utf8_lossy(&output.stdout).to_string())
+        }
+    } else {
+        Err(GitCommandFailed("Failed to get diff".to_string()))
+    }
+}
+
+pub fn commit(message: &str) -> Result<(), GitError> {
+    let output = Command::new("git")
         .args(&["commit", "-m", message])
-        .status()
-        .and_then(|status| {
-            if status.success() {
-                Ok(())
-            } else {
-                Err(io::Error::new(
-                    io::ErrorKind::Other,
-                    "Failed to commit changes",
-                ))
-            }
-        })
+        .status()?;
+
+    if output.success() {
+        Ok(())
+    } else {
+        Err(GitCommandFailed("Failed to commit changes".to_string()))
+    }
 }
