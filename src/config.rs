@@ -7,6 +7,8 @@ pub struct Config {
     pub api_token: String,
 }
 
+static CONFIG_DIRECTORY: &str = "gcmgen";
+
 impl Config {
     fn get_config_dir() -> PathBuf {
         let base_dir = if let Some(xdg_config_home) = env::var_os("XDG_CONFIG_HOME") {
@@ -15,7 +17,7 @@ impl Config {
             let home_dir = env::var_os("HOME").expect("HOME environment variable not set");
             PathBuf::from(home_dir).join(".config")
         };
-        base_dir.join("gsm")
+        base_dir.join(&CONFIG_DIRECTORY)
     }
 
     pub fn save_token(token: &str) -> std::io::Result<()> {
@@ -69,7 +71,7 @@ mod tests {
     #[test]
     fn test_save_token_creates_config_file() {
         let (xdg_config_home, _) = setup_temp_env();
-        let config_file = xdg_config_home.join("gsm/config.json");
+        let config_file = xdg_config_home.join(&CONFIG_DIRECTORY).join("config.json");
 
         // Ensure the test directory is clean before running the test
         if config_file.exists() {
@@ -89,7 +91,7 @@ mod tests {
     #[test]
     fn test_load_token_reads_correct_value() {
         let (xdg_config_home, _) = setup_temp_env();
-        let config_file = xdg_config_home.join("gsm/config.json");
+        let config_file = xdg_config_home.join(&CONFIG_DIRECTORY).join("config.json");
 
         let token = "test_token";
         Config::save_token(token).unwrap();
@@ -105,7 +107,7 @@ mod tests {
     #[test]
     fn test_load_token_returns_error_when_file_missing() {
         let (xdg_config_home, _) = setup_temp_env();
-        let config_file = xdg_config_home.join("gsm/config.json");
+        let config_file = xdg_config_home.join(&CONFIG_DIRECTORY).join("config.json");
 
         // Ensure the file does not exist
         if config_file.exists() {
@@ -122,7 +124,7 @@ mod tests {
         let (xdg_config_home, _) = setup_temp_env();
 
         let config_dir = Config::get_config_dir();
-        assert_eq!(config_dir, xdg_config_home.join("gsm"));
+        assert_eq!(config_dir, xdg_config_home.join(&CONFIG_DIRECTORY));
     }
 
     #[test]
@@ -131,7 +133,7 @@ mod tests {
 
         env::remove_var("XDG_CONFIG_HOME");
 
-        let expected_dir = home_dir.join(".config/gsm");
+        let expected_dir = home_dir.join(".config").join(&CONFIG_DIRECTORY);
 
         let config_dir = Config::get_config_dir();
         assert_eq!(config_dir, expected_dir);
