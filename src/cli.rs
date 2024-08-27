@@ -10,13 +10,13 @@ pub fn build_cli() -> ArgMatches {
                 .short('m')
                 .long("model")
                 .value_name("MODEL")
-                .help("Specify the OpenAI model to use")
+                .help("Specify the OpenAI model to use"),
         )
         .arg(
             Arg::new("init")
                 .long("init")
                 .value_name("TOKEN")
-                .help("Initialize the API token for OpenAI")
+                .help("Initialize the API token for OpenAI"),
         )
         .get_matches()
 }
