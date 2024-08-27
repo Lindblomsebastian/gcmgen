@@ -8,6 +8,7 @@ use crate::config::Config;
 use crate::openai::OpenAIClient;
 use std::io::Write;
 use std::{io, process};
+use crate::git::GitError;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let matches = build_cli();
@@ -40,7 +41,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     loop {
         // Get the diff from Git
-        let diff = git::get_diff()?;
+        let diff = match git::get_diff() {
+            Ok(diff) => diff,
+            Err(GitError::EmptyDiff) => {
+                eprintln!("Error: {}", GitError::EmptyDiff);
+                return Ok(()); // Not an actual error, just exit gracefully
+            }
+            Err(e) => {
+                eprintln!("Error: {}", e);  // Use {} to invoke Display instead of Debug
+                return Err(Box::new(e));
+            }
+        };
 
         // Generate the commit message
         let commit_message = openai_client.generate_commit_message(&diff)?;

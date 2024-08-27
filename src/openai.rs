@@ -5,7 +5,7 @@ use std::error::Error;
 pub struct OpenAIClient {
     api_key: String,
     client: Client,
-    pub model: String,
+    model: String,
 }
 
 impl OpenAIClient {
