@@ -1,5 +1,5 @@
 use std::error::Error;
-use std::io::ErrorKind;
+
 use std::{fmt, io};
 
 use crate::git::GitError::GitCommandFailed;

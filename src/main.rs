@@ -5,10 +5,10 @@ mod openai;
 
 use crate::cli::build_cli;
 use crate::config::Config;
+use crate::git::GitError;
 use crate::openai::OpenAIClient;
 use std::io::Write;
 use std::{io, process};
-use crate::git::GitError;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let matches = build_cli();
@@ -48,7 +48,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 return Ok(()); // Not an actual error, just exit gracefully
             }
             Err(e) => {
-                eprintln!("Error: {}", e);  // Use {} to invoke Display instead of Debug
+                eprintln!("Error: {}", e); // Use {} to invoke Display instead of Debug
                 return Err(Box::new(e));
             }
         };
