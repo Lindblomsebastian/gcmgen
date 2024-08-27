@@ -327,12 +327,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "gcm"
+name = "gcmgen"
 version = "0.1.0"
 dependencies = [
  "clap",
  "dirs",
- "log",
  "reqwest",
  "serde",
  "serde_json",
