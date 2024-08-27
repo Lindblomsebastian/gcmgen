@@ -7,7 +7,6 @@ GCMGen (Git Commit Message Generator) is a command-line tool that generates mean
 - **AI-Powered Commit Messages**: Generate commit messages based on the staged changes in your Git repository.
 - **Model Flexibility**: Use a default OpenAI model or specify a different one.
 - **Interactive Mode**: Review the generated commit message, regenerate if necessary, or skip the commit process entirely.
-- **Error Handling**: Provides clear error messages when something goes wrong, such as when no files are staged.
 
 ## Installation
 
@@ -19,7 +18,7 @@ GCMGen (Git Commit Message Generator) is a command-line tool that generates mean
 ### Cloning the Repository
 
 ```sh
-git clone https://github.com/yourusername/gcmgen.git
+git clone https://github.com/lindblomsebastian/gcmgen.git
 cd gcmgen
 ```
 
