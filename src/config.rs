@@ -49,13 +49,16 @@ impl Config {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serial_test::serial;
     use std::env;
     use std::fs;
     use std::path::PathBuf;
+    use uuid::Uuid;
 
-    // Utility function to set up a temporary environment
+    // Utility function to set up a unique temporary environment for each test
     fn setup_temp_env() -> (PathBuf, PathBuf) {
-        let temp_dir = env::temp_dir().join("config_test_env");
+        let unique_id = Uuid::new_v4().to_string();
+        let temp_dir = env::temp_dir().join(format!("config_test_env_{}", unique_id));
         let xdg_config_home = temp_dir.join("xdg_config");
         let home_dir = temp_dir.join("home");
 
@@ -69,9 +72,14 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_save_token_creates_config_file() {
         let (xdg_config_home, _) = setup_temp_env();
-        let config_file = xdg_config_home.join(&CONFIG_DIRECTORY).join("config.json");
+        let config_dir = xdg_config_home.join(CONFIG_DIRECTORY);
+        let config_file = config_dir.join("config.json");
+
+        // Ensure the directory exists before proceeding
+        fs::create_dir_all(&config_dir).unwrap();
 
         // Ensure the test directory is clean before running the test
         if config_file.exists() {
@@ -89,9 +97,14 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_load_token_reads_correct_value() {
         let (xdg_config_home, _) = setup_temp_env();
-        let config_file = xdg_config_home.join(&CONFIG_DIRECTORY).join("config.json");
+        let config_dir = xdg_config_home.join(CONFIG_DIRECTORY);
+        let config_file = config_dir.join("config.json");
+
+        // Ensure the directory exists before proceeding
+        fs::create_dir_all(&config_dir).unwrap();
 
         let token = "test_token";
         Config::save_token(token).unwrap();
@@ -105,9 +118,14 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_load_token_returns_error_when_file_missing() {
         let (xdg_config_home, _) = setup_temp_env();
-        let config_file = xdg_config_home.join(&CONFIG_DIRECTORY).join("config.json");
+        let config_dir = xdg_config_home.join(CONFIG_DIRECTORY);
+        let config_file = config_dir.join("config.json");
+
+        // Ensure the directory exists before proceeding
+        fs::create_dir_all(&config_dir).unwrap();
 
         // Ensure the file does not exist
         if config_file.exists() {
@@ -120,20 +138,22 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_get_config_dir_respects_xdg_config_home() {
         let (xdg_config_home, _) = setup_temp_env();
 
         let config_dir = Config::get_config_dir();
-        assert_eq!(config_dir, xdg_config_home.join(&CONFIG_DIRECTORY));
+        assert_eq!(config_dir, xdg_config_home.join(CONFIG_DIRECTORY));
     }
 
     #[test]
+    #[serial]
     fn test_get_config_dir_falls_back_to_home_config() {
         let (_, home_dir) = setup_temp_env();
 
         env::remove_var("XDG_CONFIG_HOME");
 
-        let expected_dir = home_dir.join(".config").join(&CONFIG_DIRECTORY);
+        let expected_dir = home_dir.join(".config").join(CONFIG_DIRECTORY);
 
         let config_dir = Config::get_config_dir();
         assert_eq!(config_dir, expected_dir);
