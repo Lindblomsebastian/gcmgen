@@ -24,14 +24,22 @@ impl Client {
 }
 
 pub trait CommitMessageGenerator {
-    fn generate_commit_message(&self, diff: &str) -> Result<String, Box<dyn std::error::Error>>;
+    fn generate_commit_message(
+        &self,
+        diff: &str,
+        prefix: Option<&String>,
+    ) -> Result<String, Box<dyn std::error::Error>>;
 }
 
 impl CommitMessageGenerator for Client {
-    fn generate_commit_message(&self, diff: &str) -> Result<String, Box<dyn std::error::Error>> {
+    fn generate_commit_message(
+        &self,
+        diff: &str,
+        prefix: Option<&String>,
+    ) -> Result<String, Box<dyn std::error::Error>> {
         match self {
-            Client::OpenAI(client) => client.generate_commit_message(diff),
-            Client::Anthropic(client) => client.generate_commit_message(diff),
+            Client::OpenAI(client) => client.generate_commit_message(diff, prefix),
+            Client::Anthropic(client) => client.generate_commit_message(diff, prefix),
         }
     }
 }

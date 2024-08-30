@@ -14,7 +14,13 @@ pub fn build_cli() -> ArgMatches {
         .arg(
             Arg::new("set-default")
                 .long("set-default")
-                .help("Sets the default config"),
+                .help("Sets the default config. Example: gcmgen --set-default OpenAI"),
+        )
+        .arg(
+            Arg::new("prefix")
+                .long("prefix")
+                .short('p')
+                .help("Set prefix for commit message. Example: gcmgen -p TICKET-123"),
         )
         .arg(
             Arg::new("list-services")

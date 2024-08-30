@@ -94,6 +94,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Get the diff from Git
     let _diff = git::get_diff()?;
 
+    let prefix = matches.get_one::<String>("prefix");
+
     loop {
         // Get the diff from Git
         let diff = match git::get_diff() {
@@ -109,7 +111,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         };
 
         // Generate the commit message
-        let commit_message = client.generate_commit_message(&diff)?;
+        let commit_message = client.generate_commit_message(&diff, prefix)?;
 
         // Display the generated commit message to the user
         println!("\nGenerated commit message:\n\n{}\n", commit_message);

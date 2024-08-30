@@ -21,7 +21,11 @@ impl AnthropicClient {
 }
 
 impl CommitMessageGenerator for AnthropicClient {
-    fn generate_commit_message(&self, diff: &str) -> Result<String, Box<dyn Error>> {
+    fn generate_commit_message(
+        &self,
+        diff: &str,
+        prefix: Option<&String>,
+    ) -> Result<String, Box<dyn Error>> {
         let messages = json!([
             {
                 "role": "system",
@@ -66,6 +70,12 @@ impl CommitMessageGenerator for AnthropicClient {
                 )) as Box<dyn Error>
             })?;
 
-        Ok(message.trim().to_string())
+        let final_message = if let Some(prefix) = prefix {
+            format!("{} {}", prefix, message.trim())
+        } else {
+            message.trim().to_string()
+        };
+
+        Ok(final_message)
     }
 }
