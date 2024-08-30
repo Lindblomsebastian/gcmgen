@@ -19,20 +19,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let matches = build_cli();
 
     if matches.get_flag("init") {
-        let service_options = vec!["OpenAI", "Anthropic"];
-        let service_choice = Select::new("Choose your AI service:", service_options)
+        let services = vec!["OpenAI", "Anthropic"];
+        let selected_service = Select::new("Choose your AI service:", services)
             .prompt()
             .unwrap();
 
-        let default_model = match service_choice {
-            "OpenAi" => "gpt-4o-mini",
-            "Anthropic" => todo!(),
-            &_ => "placeholder",
+        let default_models = match selected_service {
+            "OpenAI" => "gpt-4o-mini",
+            "Anthropic" => "claude-3-5-sonnet-20240620",
+            &_ => unreachable!(),
         };
 
         // Prompt user for the model name
         let model = Text::new("Enter the model name (or the default values will be used):")
-            .with_initial_value(default_model)
+            .with_initial_value(default_models)
             .prompt()
             .unwrap();
 
@@ -49,7 +49,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let mut config = match Config::load() {
             Ok(config) => config,
             Err(_) => Config {
-                default_service: service_choice.to_string(),
+                default_service: selected_service.to_string(),
                 services: std::collections::HashMap::new(),
             },
         };
@@ -57,8 +57,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         // Update the configuration with the chosen service
         config
             .services
-            .insert(service_choice.to_string(), service_config);
-        config.default_service = service_choice.to_string();
+            .insert(selected_service.to_string(), service_config);
+        config.default_service = selected_service.to_string();
 
         // Save the configuration
         config.save()?;
@@ -67,13 +67,28 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     // Load the API key from config
-    let config = match Config::load() {
+    let mut config = match Config::load() {
         Ok(config) => config,
         Err(_) => {
             eprintln!("Error: No config file found. Please run 'gcmgen --init to initialize.");
             exit(1);
         }
     };
+
+    if matches.get_flag("list-services") {
+        println!("{}", config);
+        return Ok(());
+    }
+
+    if let Some(service) = matches.get_one::<String>("set-default") {
+        match config.set_default_service(service) {
+            Ok(_) => println!("Default service set to '{}'.", service),
+            Err(e) => {
+                eprintln!("Error setting default service: {}", e);
+                exit(1);
+            }
+        }
+    }
 
     let client = Client::new(
         config.get_default_service_config().unwrap(),

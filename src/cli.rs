@@ -11,5 +11,17 @@ pub fn build_cli() -> ArgMatches {
                 .action(ArgAction::SetTrue)
                 .help("Initialize the config"),
         )
+        .arg(
+            Arg::new("set-default")
+                .long("set-default")
+                .help("Sets the default config"),
+        )
+        .arg(
+            Arg::new("list-services")
+                .long("list-services")
+                .short('l')
+                .help("Lists all configured services")
+                .action(ArgAction::SetTrue),
+        )
         .get_matches()
 }

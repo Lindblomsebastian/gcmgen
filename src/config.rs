@@ -1,7 +1,8 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::fmt::{Display, Formatter};
 use std::path::PathBuf;
-use std::{env, fs, io};
+use std::{env, fmt, fs, io};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct ServiceConfig {
@@ -13,6 +14,32 @@ pub struct ServiceConfig {
 pub struct Config {
     pub default_service: String,
     pub services: HashMap<String, ServiceConfig>,
+}
+
+impl Display for Config {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        writeln!(f, "Default Service: {}", self.default_service)?;
+
+        for (service_name, service_config) in &self.services {
+            writeln!(f, "\nService: {}", service_name)?;
+            writeln!(f, "{}", service_config)?;
+        }
+
+        Ok(())
+    }
+}
+
+impl Display for ServiceConfig {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        let masked_token = if self.api_token.len() > 5 {
+            format!("{}***", &self.api_token[..5])
+        } else {
+            format!("{}***", self.api_token)
+        };
+
+        writeln!(f, "API Token: {}", masked_token)?;
+        writeln!(f, "Model: {}", self.model)
+    }
 }
 
 static CONFIG_DIRECTORY: &str = "gcmgen";
@@ -49,17 +76,10 @@ impl Config {
         Ok(config)
     }
 
-    #[allow(dead_code)]
-    pub fn get_service_config(&self, service_name: Option<&str>) -> Option<&ServiceConfig> {
-        let service_key = service_name.unwrap_or(&self.default_service);
-        self.services.get(service_key)
-    }
-
     pub fn get_default_service_config(&self) -> Option<&ServiceConfig> {
         self.services.get(self.default_service.as_str())
     }
 
-    #[allow(dead_code)]
     pub fn set_default_service(&mut self, service_name: &str) -> Result<(), String> {
         if self.services.contains_key(service_name) {
             self.default_service = service_name.to_string();
