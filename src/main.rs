@@ -20,27 +20,23 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     if matches.get_flag("init") {
         let services = vec!["OpenAI", "Anthropic"];
-        let selected_service = Select::new("Choose your AI service:", services)
-            .prompt()
-            .unwrap();
+        let selected_service = Select::new("Choose your AI service:", services).prompt()?;
 
         let default_models = match selected_service {
             "OpenAI" => "gpt-4o-mini",
             "Anthropic" => "claude-3-5-sonnet-20240620",
-            &_ => unreachable!(),
+            &_ => unreachable!("No other services implement yet."),
         };
 
         // Prompt user for the model name
         let model = Text::new("Enter the model name (or the default values will be used):")
             .with_initial_value(default_models)
-            .prompt()
-            .unwrap();
+            .prompt()?;
 
         // Prompt user for the API key (secret input)
         let api_token = Password::new("Enter your API key:")
             .with_display_mode(Password::DEFAULT_DISPLAY_MODE)
-            .prompt()
-            .unwrap();
+            .prompt()?;
 
         // Construct the service configuration
         let service_config = ServiceConfig { api_token, model };

@@ -21,7 +21,7 @@ impl OpenAIClient {
 }
 
 impl CommitMessageGenerator for OpenAIClient {
-    fn generate_commit_message(&self, diff: &str) -> Result<String, Box<dyn std::error::Error>> {
+    fn generate_commit_message(&self, diff: &str) -> Result<String, Box<dyn Error>> {
         let messages = json!([
             {
                 "role": "system",
