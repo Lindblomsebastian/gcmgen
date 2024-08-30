@@ -4,24 +4,24 @@ use reqwest::blocking::Client;
 use serde_json::json;
 use std::error::Error;
 
-pub struct OpenAIClient {
-    api_key: String,
+pub struct AnthropicClient {
+    api_token: String,
     client: Client,
     model: String,
 }
 
-impl OpenAIClient {
+impl AnthropicClient {
     pub fn new(service_config: &ServiceConfig) -> Self {
-        OpenAIClient {
-            api_key: service_config.api_token.clone(),
+        AnthropicClient {
+            api_token: service_config.api_token.clone(),
             model: service_config.model.clone(),
             client: Client::new(),
         }
     }
 }
 
-impl CommitMessageGenerator for OpenAIClient {
-    fn generate_commit_message(&self, diff: &str) -> Result<String, Box<dyn std::error::Error>> {
+impl CommitMessageGenerator for AnthropicClient {
+    fn generate_commit_message(&self, diff: &str) -> Result<String, Box<dyn Error>> {
         let messages = json!([
             {
                 "role": "system",
@@ -40,22 +40,21 @@ impl CommitMessageGenerator for OpenAIClient {
 
         let response = self
             .client
-            .post("https://api.openai.com/v1/chat/completions")
-            .bearer_auth(&self.api_key)
+            .post("https://api.anthropic.com/v1/messages")
+            .header("x-api-key", &self.api_token)
             .json(&json!({
                 "model": &self.model,
-                "messages": messages,
-                "max_tokens": 60,
+                "messages": &messages,
+                "max_tokens": 1024,
             }))
             .send()?;
 
         let response_json: serde_json::Value = response.json()?;
 
         let message = response_json
-            .get("choices")
-            .and_then(|choices| choices.get(0))
-            .and_then(|choice| choice.get("message"))
-            .and_then(|content| content.get("content"))
+            .get("content")
+            .and_then(|content| content.get(0))
+            .and_then(|text| text.get("text"))
             .and_then(|text| text.as_str())
             .ok_or_else(|| {
                 Box::new(std::io::Error::new(

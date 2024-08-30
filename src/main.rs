@@ -1,40 +1,84 @@
+mod anthropic;
 mod cli;
+mod client;
 mod config;
 mod git;
 mod openai;
 
 use crate::cli::build_cli;
-use crate::config::Config;
+use crate::client::{Client, CommitMessageGenerator};
+use crate::config::{Config, ServiceConfig};
 use crate::git::GitError;
-use crate::openai::OpenAIClient;
+
+use inquire::{Password, Select, Text};
+use std::io;
 use std::io::Write;
-use std::{io, process};
+use std::process::exit;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let matches = build_cli();
 
-    if let Some(token) = matches.get_one::<String>("init") {
-        Config::save_token(token)?;
-        println!("API token saved successfully.");
+    if matches.get_flag("init") {
+        let service_options = vec!["OpenAI", "Anthropic"];
+        let service_choice = Select::new("Choose your AI service:", service_options)
+            .prompt()
+            .unwrap();
+
+        let default_model = match service_choice {
+            "OpenAi" => "gpt-4o-mini",
+            "Anthropic" => todo!(),
+            &_ => "placeholder",
+        };
+
+        // Prompt user for the model name
+        let model = Text::new("Enter the model name (or the default values will be used):")
+            .with_initial_value(default_model)
+            .prompt()
+            .unwrap();
+
+        // Prompt user for the API key (secret input)
+        let api_token = Password::new("Enter your API key:")
+            .with_display_mode(Password::DEFAULT_DISPLAY_MODE)
+            .prompt()
+            .unwrap();
+
+        // Construct the service configuration
+        let service_config = ServiceConfig { api_token, model };
+
+        // Load existing configuration or create a new one
+        let mut config = match Config::load() {
+            Ok(config) => config,
+            Err(_) => Config {
+                default_service: service_choice.to_string(),
+                services: std::collections::HashMap::new(),
+            },
+        };
+
+        // Update the configuration with the chosen service
+        config
+            .services
+            .insert(service_choice.to_string(), service_config);
+        config.default_service = service_choice.to_string();
+
+        // Save the configuration
+        config.save()?;
+        println!("Configuration saved successfully.");
         return Ok(());
     }
 
     // Load the API key from config
-    let api_key = match Config::load_token() {
-        Ok(key) => key,
+    let config = match Config::load() {
+        Ok(config) => config,
         Err(_) => {
-            eprintln!(
-                "Error: API token not found. Please run 'gcm --init <your_token>' to initialize."
-            );
-            process::exit(1);
+            eprintln!("Error: No config file found. Please run 'gcmgen --init to initialize.");
+            exit(1);
         }
     };
 
-    // Initialize the OpenAI client with the default model or a specified one
-    let mut openai_client = OpenAIClient::new(&api_key);
-    if let Some(model) = matches.get_one::<String>("model") {
-        openai_client = openai_client.with_model(model);
-    }
+    let client = Client::new(
+        config.get_default_service_config().unwrap(),
+        &config.default_service,
+    )?;
 
     // Get the diff from Git
     let _diff = git::get_diff()?;
@@ -54,7 +98,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         };
 
         // Generate the commit message
-        let commit_message = openai_client.generate_commit_message(&diff)?;
+        let commit_message = client.generate_commit_message(&diff)?;
 
         // Display the generated commit message to the user
         println!("\nGenerated commit message:\n\n{}\n", commit_message);

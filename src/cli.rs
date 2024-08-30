@@ -1,4 +1,4 @@
-use clap::{command, Arg, ArgMatches};
+use clap::{command, Arg, ArgAction, ArgMatches};
 
 pub fn build_cli() -> ArgMatches {
     command!()
@@ -6,17 +6,10 @@ pub fn build_cli() -> ArgMatches {
         .author("Sebastian Stan")
         .about("Generates commit messages using AI")
         .arg(
-            Arg::new("model")
-                .short('m')
-                .long("model")
-                .value_name("MODEL")
-                .help("Specify the OpenAI model to use"),
-        )
-        .arg(
             Arg::new("init")
                 .long("init")
-                .value_name("TOKEN")
-                .help("Initialize the API token for OpenAI"),
+                .action(ArgAction::SetTrue)
+                .help("Initialize the config"),
         )
         .get_matches()
 }
