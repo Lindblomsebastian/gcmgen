@@ -1,7 +1,3 @@
-Certainly! Here’s a more concise version of the README, focusing on the essential information:
-
----
-
 # GCMGen
 
 GCMGen (Git Commit Message Generator) is a command-line tool that generates meaningful Git commit messages using AI models like OpenAI and Anthropic. It analyzes your staged changes (diff) and provides context-aware commit message suggestions.
