@@ -35,6 +35,11 @@ gcmgen --init
 gcmgen
 ```
 
+### Generate a commit message with a prefix
+```sh
+gcmgen -p "[WIP]"
+```
+
 - Retrieves the diff of your staged changes.
 - Sends the diff to the selected AI service.
 - Prompts you to accept, regenerate, or skip the commit message.
