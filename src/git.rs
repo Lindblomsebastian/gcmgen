@@ -31,7 +31,7 @@ impl From<io::Error> for GitError {
 }
 
 pub fn get_diff() -> Result<String, GitError> {
-    let output = Command::new("git").args(&["diff", "--staged"]).output()?;
+    let output = Command::new("git").args(["diff", "--staged"]).output()?;
 
     if output.status.success() {
         if output.stdout.is_empty() {
@@ -46,7 +46,7 @@ pub fn get_diff() -> Result<String, GitError> {
 
 pub fn commit(message: &str) -> Result<(), GitError> {
     let output = Command::new("git")
-        .args(&["commit", "-m", message])
+        .args(["commit", "-m", message])
         .status()?;
 
     if output.success() {

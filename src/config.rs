@@ -1,10 +1,45 @@
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::fmt::{Display, Formatter};
 use std::path::PathBuf;
-use std::{env, fs};
+use std::{env, fmt, fs, io};
 
-#[derive(Serialize, Deserialize)]
-pub struct Config {
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub struct ServiceConfig {
     pub api_token: String,
+    pub model: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Config {
+    pub default_service: String,
+    pub services: HashMap<String, ServiceConfig>,
+}
+
+impl Display for Config {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        writeln!(f, "Default Service: {}", self.default_service)?;
+
+        for (service_name, service_config) in &self.services {
+            writeln!(f, "\nService: {}", service_name)?;
+            writeln!(f, "{}", service_config)?;
+        }
+
+        Ok(())
+    }
+}
+
+impl Display for ServiceConfig {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        let masked_token = if self.api_token.len() > 5 {
+            format!("{}***", &self.api_token[..5])
+        } else {
+            format!("{}***", self.api_token)
+        };
+
+        writeln!(f, "API Token: {}", masked_token)?;
+        writeln!(f, "Model: {}", self.model)
+    }
 }
 
 static CONFIG_DIRECTORY: &str = "gcmgen";
@@ -17,32 +52,42 @@ impl Config {
             let home_dir = env::var_os("HOME").expect("HOME environment variable not set");
             PathBuf::from(home_dir).join(".config")
         };
-        base_dir.join(&CONFIG_DIRECTORY)
+        base_dir.join(CONFIG_DIRECTORY)
     }
 
-    pub fn save_token(token: &str) -> std::io::Result<()> {
-        let config_dir = Config::get_config_dir();
+    pub fn save(&self) -> Result<(), io::Error> {
+        let config_dir = Self::get_config_dir();
         let config_file = config_dir.join("config.json");
 
-        let config = Config {
-            api_token: token.to_string(),
-        };
-
-        let config_json = serde_json::to_string_pretty(&config)?;
+        let config_json = serde_json::to_string_pretty(&self)?;
         fs::create_dir_all(config_dir)?;
         fs::write(config_file, config_json)?;
 
         Ok(())
     }
 
-    pub fn load_token() -> Result<String, std::io::Error> {
-        let config_dir = Config::get_config_dir();
+    pub fn load() -> Result<Self, io::Error> {
+        let config_dir = Self::get_config_dir();
         let config_file = config_dir.join("config.json");
 
         let config_data = fs::read_to_string(config_file)?;
         let config: Config = serde_json::from_str(&config_data)?;
 
-        Ok(config.api_token)
+        Ok(config)
+    }
+
+    pub fn get_default_service_config(&self) -> Option<&ServiceConfig> {
+        self.services.get(self.default_service.as_str())
+    }
+
+    pub fn set_default_service(&mut self, service_name: &str) -> Result<(), String> {
+        if self.services.contains_key(service_name) {
+            self.default_service = service_name.to_string();
+            self.save().unwrap();
+            Ok(())
+        } else {
+            Err(format!("Service '{}' not found", service_name))
+        }
     }
 }
 
@@ -73,7 +118,7 @@ mod tests {
 
     #[test]
     #[serial]
-    fn test_save_token_creates_config_file() {
+    fn test_save_creates_config_file() {
         let (xdg_config_home, _) = setup_temp_env();
         let config_dir = xdg_config_home.join(CONFIG_DIRECTORY);
         let config_file = config_dir.join("config.json");
@@ -86,8 +131,20 @@ mod tests {
             fs::remove_file(&config_file).unwrap();
         }
 
-        let token = "test_token";
-        Config::save_token(token).unwrap();
+        let service_config = ServiceConfig {
+            api_token: "test_token".to_string(),
+            model: "gpt-4o-mini".to_string(),
+        };
+
+        let config = Config {
+            default_service: "OpenAI".to_string(),
+            services: [("OpenAI".to_string(), service_config)]
+                .iter()
+                .cloned()
+                .collect(),
+        };
+
+        config.save().unwrap();
 
         // Check if the file was created
         assert!(config_file.exists());
@@ -98,7 +155,7 @@ mod tests {
 
     #[test]
     #[serial]
-    fn test_load_token_reads_correct_value() {
+    fn test_load_reads_correct_config() {
         let (xdg_config_home, _) = setup_temp_env();
         let config_dir = xdg_config_home.join(CONFIG_DIRECTORY);
         let config_file = config_dir.join("config.json");
@@ -106,12 +163,28 @@ mod tests {
         // Ensure the directory exists before proceeding
         fs::create_dir_all(&config_dir).unwrap();
 
-        let token = "test_token";
-        Config::save_token(token).unwrap();
+        let service_config = ServiceConfig {
+            api_token: "test_token".to_string(),
+            model: "gpt-4o-mini".to_string(),
+        };
 
-        // Load the token from the config file
-        let loaded_token = Config::load_token().unwrap();
-        assert_eq!(loaded_token, token);
+        let config = Config {
+            default_service: "OpenAI".to_string(),
+            services: [("OpenAI".to_string(), service_config.clone())]
+                .iter()
+                .cloned()
+                .collect(),
+        };
+
+        config.save().unwrap();
+
+        // Load the configuration from the file
+        let loaded_config = Config::load().unwrap();
+        assert_eq!(loaded_config.default_service, "OpenAI");
+        assert_eq!(
+            loaded_config.services.get("OpenAI").unwrap(),
+            &service_config
+        );
 
         // Clean up the test file
         fs::remove_file(config_file).unwrap();
@@ -119,7 +192,7 @@ mod tests {
 
     #[test]
     #[serial]
-    fn test_load_token_returns_error_when_file_missing() {
+    fn test_load_returns_error_when_file_missing() {
         let (xdg_config_home, _) = setup_temp_env();
         let config_dir = xdg_config_home.join(CONFIG_DIRECTORY);
         let config_file = config_dir.join("config.json");
@@ -132,9 +205,50 @@ mod tests {
             fs::remove_file(&config_file).unwrap();
         }
 
-        // Try to load a token from a non-existent file
-        let result = Config::load_token();
+        // Try to load a config from a non-existent file
+        let result = Config::load();
         assert!(result.is_err());
+    }
+
+    #[test]
+    #[serial]
+    fn test_set_default_service() {
+        let (xdg_config_home, _) = setup_temp_env();
+        let config_dir = xdg_config_home.join(CONFIG_DIRECTORY);
+        let config_file = config_dir.join("config.json");
+
+        let service_config_openai = ServiceConfig {
+            api_token: "test_token_openai".to_string(),
+            model: "gpt-4o-mini".to_string(),
+        };
+
+        let service_config_anthropic = ServiceConfig {
+            api_token: "test_token_anthropic".to_string(),
+            model: "claude-v1".to_string(),
+        };
+
+        let mut config = Config {
+            default_service: "OpenAI".to_string(),
+            services: [
+                ("OpenAI".to_string(), service_config_openai.clone()),
+                ("Anthropic".to_string(), service_config_anthropic.clone()),
+            ]
+            .iter()
+            .cloned()
+            .collect(),
+        };
+
+        config.save().unwrap();
+
+        // Set the default service to "Anthropic"
+        config.set_default_service("Anthropic").unwrap();
+
+        // Load the configuration from the file
+        let loaded_config = Config::load().unwrap();
+        assert_eq!(loaded_config.default_service, "Anthropic");
+
+        // Clean up the test file
+        fs::remove_file(config_file).unwrap();
     }
 
     #[test]
