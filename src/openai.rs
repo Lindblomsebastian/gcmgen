@@ -102,8 +102,6 @@ impl PullRequestGenerator for OpenAIClient {
 
         let description = self.generate_text(messages)?;
 
-        println!("{}", description);
-
         Ok(description.trim().to_string())
     }
 }
