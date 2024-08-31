@@ -56,7 +56,7 @@ impl PullRequestGenerator for OpenAIClient {
     fn generate_pr_title(
         &self,
         diff: &str,
-        prefix: Option<&str>,
+        prefix: Option<&String>,
     ) -> Result<String, Box<dyn Error>> {
         let messages = json!([
             {
@@ -95,11 +95,14 @@ impl PullRequestGenerator for OpenAIClient {
             },
             {
                 "role": "assistant",
-                "content": "Generate a detailed and meaningful description for a GitHub pull request based on the provided git diff."
+                "content": "Generate a detailed and meaningful description for a GitHub pull request based on the provided git diff. \n\
+                Only answer with the description, nothing else."
             }
         ]);
 
         let description = self.generate_text(messages)?;
+
+        println!("{}", description);
 
         Ok(description.trim().to_string())
     }

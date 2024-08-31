@@ -2,7 +2,7 @@ use std::error::Error;
 use std::process::Command;
 
 #[allow(dead_code)]
-fn create_pull_request(
+pub fn create_pull_request(
     title: &str,
     description: &str,
     base_branch: Option<&str>,

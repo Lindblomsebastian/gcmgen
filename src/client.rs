@@ -27,7 +27,7 @@ pub trait PullRequestGenerator {
     fn generate_pr_title(
         &self,
         diff: &str,
-        prefix: Option<&str>,
+        prefix: Option<&String>,
     ) -> Result<String, Box<dyn std::error::Error>>;
 
     fn generate_pr_description(&self, diff: &str) -> Result<String, Box<dyn std::error::Error>>;
@@ -37,7 +37,7 @@ impl PullRequestGenerator for Client {
     fn generate_pr_title(
         &self,
         diff: &str,
-        prefix: Option<&str>,
+        prefix: Option<&String>,
     ) -> Result<String, Box<dyn std::error::Error>> {
         match self {
             Client::OpenAI(client) => client.generate_pr_title(diff, prefix),

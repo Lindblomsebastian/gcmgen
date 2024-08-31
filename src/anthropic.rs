@@ -56,7 +56,7 @@ impl PullRequestGenerator for AnthropicClient {
     fn generate_pr_title(
         &self,
         _diff: &str,
-        _prefix: Option<&str>,
+        _prefix: Option<&String>,
     ) -> Result<String, Box<dyn Error>> {
         todo!()
     }

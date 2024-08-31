@@ -8,8 +8,9 @@ mod openai;
 mod vim;
 
 use crate::cli::build_cli;
-use crate::client::{Client, CommitMessageGenerator};
+use crate::client::{Client, CommitMessageGenerator, PullRequestGenerator};
 use crate::config::{Config, ServiceConfig};
+use crate::gh::create_pull_request;
 use crate::git::GitError;
 
 use crate::vim::Vim;
@@ -112,6 +113,40 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 return Err(Box::new(e));
             }
         };
+
+        if matches.get_flag("pull-request") {
+            let title = client.generate_pr_title(&diff, prefix)?;
+            let description = client.generate_pr_description(&diff)?;
+
+            println!("\nGenerated PR Title:\n{}\n", title);
+            println!("Generated PR Description:\n{}\n", description);
+
+            // Ask the user what they want to do
+            print!("Do you want to (a)ccept, (e)dit title/description, or (c)ancel? [a/e/c]: ");
+            io::stdout().flush()?;
+
+            let mut input = String::new();
+            io::stdin().read_line(&mut input)?;
+            let input = input.trim().to_lowercase();
+
+            match input.as_str() {
+                "a" => {
+                    // Open the PR in the web browser with the title and description
+                    create_pull_request(&title, &description, Some("main"))?;
+                    println!("Pull request created successfully.");
+                    return Ok(());
+                }
+                "c" => {
+                    // Cancel the PR creation process
+                    println!("PR creation canceled.");
+                    return Ok(());
+                }
+                _ => {
+                    // Invalid input, ask again
+                    println!("Invalid option. Please choose 'a' to accept, 'e' to edit, or 'c' to cancel.");
+                }
+            }
+        }
 
         let mut commit_message = client.generate_commit_message(&diff, prefix)?;
 
