@@ -2,6 +2,7 @@ mod anthropic;
 mod cli;
 mod client;
 mod config;
+mod gh;
 mod git;
 mod openai;
 mod vim;
