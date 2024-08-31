@@ -4,12 +4,14 @@ mod client;
 mod config;
 mod git;
 mod openai;
+mod vim;
 
 use crate::cli::build_cli;
 use crate::client::{Client, CommitMessageGenerator};
 use crate::config::{Config, ServiceConfig};
 use crate::git::GitError;
 
+use crate::vim::Vim;
 use inquire::{Password, Select, Text};
 use std::io;
 use std::io::Write;
@@ -91,9 +93,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         &config.default_service,
     )?;
 
-    // Get the diff from Git
-    let _diff = git::get_diff()?;
-
     let prefix = matches.get_one::<String>("prefix");
 
     loop {
@@ -111,13 +110,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         };
 
         // Generate the commit message
-        let commit_message = client.generate_commit_message(&diff, prefix)?;
+        let mut commit_message = client.generate_commit_message(&diff, prefix)?;
 
         // Display the generated commit message to the user
         println!("\nGenerated commit message:\n\n{}\n", commit_message);
 
         // Ask the user what they want to do
-        print!("Do you want to (a)ccept, (r)egenerate, or (q)uit? If you quit, nothing will be committed [a/r/q]: ");
+        print!("Do you want to (a)ccept, (e)dit, (r)egenerate, or (q)uit? If you quit, nothing will be committed [a/r/q]: ");
         io::stdout().flush()?;
 
         let mut input = String::new();
@@ -129,7 +128,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 // Accept the commit message and commit the changes
                 git::commit(&commit_message)?;
                 println!("Committed with message: {}", commit_message);
-                break;
+                return Ok(());
+            }
+            "e" | "E" => {
+                commit_message = Vim::new().edit_message(&commit_message)?;
+                git::commit(&commit_message)?;
+                println!("Committed with edited message: {}", commit_message);
+                return Ok(());
             }
             "r" | "R" => {
                 // Regenerate the commit message (the loop will run again)
@@ -138,7 +143,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "q" | "Q" => {
                 // Skip the commit process
                 println!("Commit skipped.");
-                break;
+                return Ok(());
             }
             _ => {
                 // Invalid input, ask again
@@ -146,6 +151,4 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
     }
-
-    Ok(())
 }

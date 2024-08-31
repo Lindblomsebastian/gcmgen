@@ -398,6 +398,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serial_test",
+ "tempfile",
  "uuid",
 ]
 
