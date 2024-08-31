@@ -44,6 +44,25 @@ pub fn get_diff() -> Result<String, GitError> {
     }
 }
 
+#[allow(dead_code)]
+pub fn get_branch_diff(base_branch: Option<&str>) -> Result<String, GitError> {
+    let branch = base_branch.unwrap_or("main"); // defaults to main
+    let output = Command::new("git").args(["diff", branch]).output()?;
+
+    if output.status.success() {
+        if output.stdout.is_empty() {
+            Err(GitError::EmptyDiff)
+        } else {
+            Ok(String::from_utf8_lossy(&output.stdout).to_string())
+        }
+    } else {
+        Err(GitCommandFailed(format!(
+            "Failed to get diff against branch '{}'",
+            branch
+        )))
+    }
+}
+
 pub fn commit(message: &str) -> Result<(), GitError> {
     let output = Command::new("git")
         .args(["commit", "-m", message])

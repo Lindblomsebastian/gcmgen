@@ -7,6 +7,8 @@ fn create_pull_request(
     description: &str,
     base_branch: Option<&str>,
 ) -> Result<(), Box<dyn Error>> {
+    let branch = base_branch.unwrap_or("main"); // main is default
+
     let mut command = Command::new("gh");
 
     command.args([
@@ -16,12 +18,10 @@ fn create_pull_request(
         title,
         "--body",
         description,
+        "--base",
+        branch,
         "--web",
     ]);
-
-    if let Some(branch) = base_branch {
-        command.arg("--base").arg(branch);
-    }
 
     let status = command.status()?;
 
