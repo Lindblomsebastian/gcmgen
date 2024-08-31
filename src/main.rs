@@ -81,7 +81,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     if let Some(service) = matches.get_one::<String>("set-default") {
         match config.set_default_service(service) {
-            Ok(_) => println!("Default service set to '{}'.", service),
+            Ok(_) => {
+                println!("Default service set to '{}'.", service);
+                return Ok(());
+            }
             Err(e) => {
                 eprintln!("Error setting default service: {}", e);
                 exit(1);
@@ -110,7 +113,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         };
 
-        // Generate the commit message
         let mut commit_message = client.generate_commit_message(&diff, prefix)?;
 
         // Display the generated commit message to the user
