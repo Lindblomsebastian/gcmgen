@@ -121,7 +121,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("Generated PR Description:\n{}\n", description);
 
             // Ask the user what they want to do
-            print!("Do you want to (a)ccept, (r)egenerate, or (c)ancel? [a/e/c]: ");
+            print!("Do you want to (y/a)ccept, (r)egenerate, or (q)uit? [(y|a)/e/q]: ");
             io::stdout().flush()?;
 
             let mut input = String::new();
@@ -129,7 +129,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let input = input.trim().to_lowercase();
 
             match input.as_str() {
-                "a" | "A" => {
+                "a" | "A" | "y" | "Y" => {
                     // Open the PR in the web browser with the title and description
                     create_pull_request(&title, &description, Some("main"))?;
                     println!("Pull request created successfully.");
@@ -138,14 +138,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 "r" | "R" => {
                     println!("Regenerating commit message...");
                 }
-                "c" => {
+                "q" => {
                     // Cancel the PR creation process
                     println!("PR creation canceled.");
                     return Ok(());
                 }
                 _ => {
                     // Invalid input, ask again
-                    println!("Invalid option. Please choose 'a' to accept, 'e' to edit, or 'c' to cancel.");
+                    println!("Invalid option. Please choose 'a' to accept, 'r' to generate , or 'q' to cancel.");
                 }
             }
         }
@@ -171,7 +171,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("\nGenerated commit message:\n\n{}\n", commit_message);
 
         // Ask the user what they want to do
-        print!("Do you want to (a)ccept, (e)dit, (r)egenerate, or (q)uit? If you quit, nothing will be committed [a/r/q]: ");
+        print!("Do you want to (y/a)ccept, (e)dit, (r)egenerate, or (q)uit? If you quit, nothing will be committed [(y|a)/r/q]: ");
         io::stdout().flush()?;
 
         let mut input = String::new();
@@ -179,7 +179,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let input = input.trim().to_lowercase();
 
         match input.as_str() {
-            "a" | "A" => {
+            "a" | "A" | "y" | "Y" => {
                 // Accept the commit message and commit the changes
                 git::commit(&commit_message)?;
                 println!("Committed with message: {}", commit_message);
