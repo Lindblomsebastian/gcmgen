@@ -32,7 +32,6 @@ impl OpenAIClient {
             .send()?;
 
         let response_json: Value = response.json()?;
-        println!("{}", response_json);
 
         response_json
             .get("choices")

@@ -1,8 +1,8 @@
-use clap::{command, Arg, ArgAction, ArgMatches};
+use clap::{command, crate_version, Arg, ArgAction, ArgMatches};
 
 pub fn build_cli() -> ArgMatches {
     command!()
-        .version("1.0")
+        .version(crate_version!())
         .author("Sebastian Stan")
         .about("Generates commit messages using AI")
         .arg(
