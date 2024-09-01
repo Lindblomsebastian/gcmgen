@@ -90,15 +90,17 @@ impl PullRequestGenerator for OpenAIClient {
                 "content": "You are a helpful assistant specialized in writing detailed GitHub pull request descriptions."
             },
             {
+                "role": "assistant",
+                "content": "Generate a detailed and meaningful description for a GitHub pull request based on the provided git diff. \n\
+                Only answer with the description, nothing else. The description will be read by engineers, so keep it concise and meaningful.\n\
+                Don't bloat it. Keep the response under 500 tokens. \n\
+                Don't include any How To's or comments about future work. \n\
+                ONLY include the changes made."
+            },
+            {
                 "role": "user",
                 "content": format!("Here is a git diff:\n\n{}", diff)
             },
-            {
-                "role": "assistant",
-                "content": "Generate a detailed and meaningful description for a GitHub pull request based on the provided git diff. \n\
-                Only answer with the description, nothing else. The description will be read by engineers, so keep it concise and meaningful.\
-                Don't bloat it. Keep the response under 500 tokens."
-            }
         ]);
 
         let description = self.generate_text(messages)?;
