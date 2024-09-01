@@ -2,13 +2,15 @@ mod anthropic;
 mod cli;
 mod client;
 mod config;
+mod gh;
 mod git;
 mod openai;
 mod vim;
 
 use crate::cli::build_cli;
-use crate::client::{Client, CommitMessageGenerator};
+use crate::client::{Client, CommitMessageGenerator, PullRequestGenerator};
 use crate::config::{Config, ServiceConfig};
+use crate::gh::create_pull_request;
 use crate::git::GitError;
 
 use crate::vim::Vim;
@@ -80,7 +82,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     if let Some(service) = matches.get_one::<String>("set-default") {
         match config.set_default_service(service) {
-            Ok(_) => println!("Default service set to '{}'.", service),
+            Ok(_) => {
+                println!("Default service set to '{}'.", service);
+                return Ok(());
+            }
             Err(e) => {
                 eprintln!("Error setting default service: {}", e);
                 exit(1);
@@ -94,6 +99,57 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     )?;
 
     let prefix = matches.get_one::<String>("prefix");
+
+    if matches.get_flag("pull-request") {
+        loop {
+            // Get the diff from Git
+            let branch_diff = match git::get_branch_diff(Some("main")) {
+                Ok(branch_diff) => branch_diff,
+                Err(GitError::EmptyDiff) => {
+                    eprintln!("Error: {}", GitError::EmptyDiff);
+                    return Ok(()); // Not an actual error, just exit gracefully
+                }
+                Err(e) => {
+                    eprintln!("Error: {}", e);
+                    return Err(Box::new(e));
+                }
+            };
+            let title = client.generate_pr_title(&branch_diff, prefix)?;
+            let description = client.generate_pr_description(&branch_diff)?;
+
+            println!("\nGenerated PR Title:\n{}\n", title);
+            println!("Generated PR Description:\n{}\n", description);
+
+            // Ask the user what they want to do
+            print!("Do you want to (a)ccept, (r)egenerate, or (c)ancel? [a/e/c]: ");
+            io::stdout().flush()?;
+
+            let mut input = String::new();
+            io::stdin().read_line(&mut input)?;
+            let input = input.trim().to_lowercase();
+
+            match input.as_str() {
+                "a" | "A" => {
+                    // Open the PR in the web browser with the title and description
+                    create_pull_request(&title, &description, Some("main"))?;
+                    println!("Pull request created successfully.");
+                    return Ok(());
+                }
+                "r" | "R" => {
+                    println!("Regenerating commit message...");
+                }
+                "c" => {
+                    // Cancel the PR creation process
+                    println!("PR creation canceled.");
+                    return Ok(());
+                }
+                _ => {
+                    // Invalid input, ask again
+                    println!("Invalid option. Please choose 'a' to accept, 'e' to edit, or 'c' to cancel.");
+                }
+            }
+        }
+    }
 
     loop {
         // Get the diff from Git
@@ -109,7 +165,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         };
 
-        // Generate the commit message
         let mut commit_message = client.generate_commit_message(&diff, prefix)?;
 
         // Display the generated commit message to the user

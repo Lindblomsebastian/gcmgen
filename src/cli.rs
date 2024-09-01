@@ -1,8 +1,8 @@
-use clap::{command, Arg, ArgAction, ArgMatches};
+use clap::{command, crate_version, Arg, ArgAction, ArgMatches};
 
 pub fn build_cli() -> ArgMatches {
     command!()
-        .version("1.0")
+        .version(crate_version!())
         .author("Sebastian Stan")
         .about("Generates commit messages using AI")
         .arg(
@@ -23,9 +23,14 @@ pub fn build_cli() -> ArgMatches {
                 .help("Set prefix for commit message. Example: gcmgen -p TICKET-123"),
         )
         .arg(
+            Arg::new("pull-request")
+                .long("pr")
+                .help("Opens up a new PR in the browser with generated description and title")
+                .action(ArgAction::SetTrue),
+        )
+        .arg(
             Arg::new("list-services")
-                .long("list-services")
-                .short('l')
+                .long("ls")
                 .help("Lists all configured services")
                 .action(ArgAction::SetTrue),
         )
