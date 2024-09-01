@@ -27,11 +27,12 @@ impl OpenAIClient {
             .json(&json!({
                 "model": &self.model,
                 "messages": messages,
-                "max_tokens": 60,
+                "max_tokens": 500,
             }))
             .send()?;
 
         let response_json: Value = response.json()?;
+        println!("{}", response_json);
 
         response_json
             .get("choices")
@@ -96,7 +97,8 @@ impl PullRequestGenerator for OpenAIClient {
             {
                 "role": "assistant",
                 "content": "Generate a detailed and meaningful description for a GitHub pull request based on the provided git diff. \n\
-                Only answer with the description, nothing else."
+                Only answer with the description, nothing else. The description will be read by engineers, so keep it concise and meaningful.\
+                Don't bloat it. Keep the response under 500 tokens."
             }
         ]);
 
