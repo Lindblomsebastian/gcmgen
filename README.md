@@ -1,6 +1,10 @@
+Certainly! Here’s an updated version of your README with the new `--pr` functionality included:
+
+---
+
 # GCMGen
 
-GCMGen (Git Commit Message Generator) is a command-line tool that generates meaningful Git commit messages using AI models like OpenAI and Anthropic. It analyzes your staged changes (diff) and provides context-aware commit message suggestions.
+GCMGen (Git Commit Message Generator) is a command-line tool that generates meaningful Git commit messages and GitHub pull request content using AI models like OpenAI and Anthropic. It analyzes your staged changes (diff) and provides context-aware commit message suggestions and PR content.
 
 ## Installation
 
@@ -35,11 +39,18 @@ gcmgen --init
 gcmgen
 ```
 
-### Generate a commit message with a prefix
+### Generate a Commit Message with a Prefix
+
 ```sh
 gcmgen -p "[WIP]"
 ```
 
-- Retrieves the diff of your staged changes.
-- Sends the diff to the selected AI service.
-- Prompts you to accept, regenerate, or skip the commit message.
+### Generate a Pull Request
+
+```sh
+gcmgen --pr
+```
+
+- Retrieves the diff between your current branch and the base branch (default: `main`).
+- Generates a PR title and description using the selected AI service.
+- Displays the generated title and description for review.
