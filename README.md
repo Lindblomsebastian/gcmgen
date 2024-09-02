@@ -2,6 +2,8 @@
 
 GCMGen (Git Commit Message Generator) is a command-line tool that generates meaningful Git commit messages and GitHub pull request content using AI models like OpenAI and Anthropic. It analyzes your staged changes (diff) and provides context-aware commit message suggestions and PR content.
 
+![GCMGen Demo](demo.gif)
+
 ## Installation
 
 ### Prerequisites
