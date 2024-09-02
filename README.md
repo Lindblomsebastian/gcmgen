@@ -8,6 +8,7 @@ GCMGen (Git Commit Message Generator) is a command-line tool that generates mean
 
 - **Rust**: Install Rust from [rust-lang.org](https://www.rust-lang.org/tools/install).
 - **Git**: Ensure Git is installed and accessible from the command line.
+- **Gh**: Install Github CLI from [github-cli](https://cli.github.com/)
 
 ### Building the Project
 
