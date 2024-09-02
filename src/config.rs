@@ -16,6 +16,7 @@ pub struct Config {
     pub services: HashMap<String, ServiceConfig>,
 }
 
+// This is a comment for demo purposes
 impl Display for Config {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         writeln!(f, "Default Service: {}", self.default_service)?;
